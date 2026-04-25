@@ -7,6 +7,18 @@ import Navbar from '../components/Navbar';
 
 const ESTADOS = { SCANNING: 'scanning', FOUND: 'found', FIRMA: 'firma', SUCCESS: 'success', ERROR: 'error' };
 
+async function buscarItem(valor) {
+  // Soporta QR con URL completa (nuevo formato) o código directo (formato viejo)
+  let codigo = valor;
+  try {
+    const url = new URL(valor);
+    const qrParam = url.searchParams.get('qr');
+    if (qrParam) codigo = qrParam;
+    else codigo = url.pathname + url.search; // fallback
+  } catch {}
+  return getItemByQR(codigo);
+}
+
 export default function Escanear() {
   const { session } = useAuth();
   const videoRef = useRef(null);
@@ -20,6 +32,17 @@ export default function Escanear() {
   const [mensaje, setMensaje] = useState('');
   const [cameraError, setCameraError] = useState('');
 
+  // Si la página se abrió con ?qr=... (desde cámara nativa del celular), cargar item directo
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const qrParam = params.get('qr');
+    if (qrParam) {
+      getItemByQR(qrParam)
+        .then(found => { setItem(found); setEstado(ESTADOS.FOUND); })
+        .catch(() => { setMensaje(`QR no reconocido: ${qrParam}`); setEstado(ESTADOS.ERROR); });
+    }
+  }, []);
+
   useEffect(() => {
     if (estado !== ESTADOS.SCANNING) return;
 
@@ -28,7 +51,7 @@ export default function Escanear() {
       async (result) => {
         scanner.stop();
         try {
-          const found = await getItemByQR(result.data);
+          const found = await buscarItem(result.data);
           setItem(found);
           setEstado(ESTADOS.FOUND);
         } catch {

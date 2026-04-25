@@ -11,10 +11,11 @@ export async function getItems() {
 }
 
 export async function getItemByQR(qrCode) {
+  // Busca por coincidencia exacta o por que el qr_code contenga el código
   const { data, error } = await supabase
     .from('items')
     .select('*')
-    .eq('qr_code', qrCode)
+    .or(`qr_code.eq.${qrCode},qr_code.like.%${qrCode}%`)
     .eq('estado', 'activo')
     .single();
   if (error) throw error;
@@ -32,8 +33,9 @@ export async function getItemById(id) {
 }
 
 export async function createItem(item) {
-  // Generar código QR único basado en UUID
-  const qrCode = `INV-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  // Generar QR como URL completa para que el celular abra la app directamente
+  const code = `INV-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  const qrCode = `${window.location.origin}/escanear?qr=${code}`;
   const { data, error } = await supabase
     .from('items')
     .insert([{ ...item, qr_code: qrCode }])
