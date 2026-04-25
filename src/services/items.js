@@ -35,7 +35,7 @@ export async function getItemById(id) {
 export async function createItem(item) {
   // Generar QR como URL completa para que el celular abra la app directamente
   const code = `INV-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-  const qrCode = `${window.location.origin}/escanear?qr=${code}`;
+  const qrCode = `https://inventario-app-hazel.vercel.app/escanear?qr=${code}`;
   const { data, error } = await supabase
     .from('items')
     .insert([{ ...item, qr_code: qrCode }])
