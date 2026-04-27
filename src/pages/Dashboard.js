@@ -34,6 +34,9 @@ export default function Dashboard() {
     (item.categoria || '').toLowerCase().includes(busqueda.toLowerCase())
   );
 
+  const stockBajo = items.filter(i => i.cantidad <= i.cantidad_minima).length;
+  const categorias = new Set(items.map(i => i.categoria).filter(Boolean)).size;
+
   return (
     <div className="app-layout">
       <Navbar />
@@ -41,9 +44,35 @@ export default function Dashboard() {
         <div className="dashboard-header">
           <h1>📦 Inventario Actual</h1>
           <button className="btn btn-primary btn-lg" onClick={() => navigate('/escanear')}>
-            📷 ESCANEAR QR
+            📷 Escanear QR
           </button>
         </div>
+
+        {!loading && (
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon stat-icon-blue">📦</div>
+              <div>
+                <div className="stat-value">{items.length}</div>
+                <div className="stat-label">Total de items</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon stat-icon-red">⚠️</div>
+              <div>
+                <div className="stat-value">{stockBajo}</div>
+                <div className="stat-label">Stock bajo</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon stat-icon-green">🏷️</div>
+              <div>
+                <div className="stat-value">{categorias}</div>
+                <div className="stat-label">Categorías</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {alertas.length > 0 && (
           <div className="alerta-banner" onClick={() => navigate('/reportes?tab=alertas')}>
@@ -54,7 +83,7 @@ export default function Dashboard() {
         <div className="search-bar">
           <input
             type="text"
-            placeholder="🔍 Buscar por nombre o categoría..."
+            placeholder="Buscar por nombre o categoría..."
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
           />
@@ -76,7 +105,9 @@ export default function Dashboard() {
               </thead>
               <tbody>
                 {itemsFiltrados.length === 0 ? (
-                  <tr><td colSpan={5} className="empty-row">No hay items{busqueda ? ' con ese filtro' : ''}.</td></tr>
+                  <tr><td colSpan={5} className="empty-row">
+                    {busqueda ? `Sin resultados para "${busqueda}"` : 'No hay items en el inventario.'}
+                  </td></tr>
                 ) : (
                   itemsFiltrados.map(item => (
                     <tr key={item.id} className={item.cantidad <= item.cantidad_minima ? 'row-alerta' : ''}>

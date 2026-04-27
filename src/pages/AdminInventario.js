@@ -145,7 +145,10 @@ export default function AdminInventario() {
         {qrVer && (
           <div className="modal-overlay" onClick={() => setQrVer(null)}>
             <div className="modal qr-modal" onClick={e => e.stopPropagation()}>
-              <h2>{qrVer.nombre}</h2>
+              <div className="modal-header">
+                <h2>{qrVer.nombre}</h2>
+                <button className="modal-close" onClick={() => setQrVer(null)}>✕</button>
+              </div>
               <QRCodeSVG value={qrVer.qr_code} size={200} />
               <p className="qr-code-text">{qrVer.qr_code}</p>
               <button className="btn btn-primary" onClick={() => window.print()}>🖨 Imprimir</button>
@@ -158,7 +161,10 @@ export default function AdminInventario() {
         {showForm && (
           <div className="modal-overlay">
             <div className="modal form-modal">
-              <h2>{editando ? 'Editar Item' : 'Nuevo Item'}</h2>
+              <div className="modal-header">
+                <h2>{editando ? 'Editar Item' : 'Nuevo Item'}</h2>
+                <button className="modal-close" onClick={() => setShowForm(false)}>✕</button>
+              </div>
               <form onSubmit={handleGuardar}>
                 <div className="form-grid">
                   <div className="form-group">

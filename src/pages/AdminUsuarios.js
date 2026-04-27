@@ -136,7 +136,10 @@ export default function AdminUsuarios() {
         {showForm && (
           <div className="modal-overlay">
             <div className="modal form-modal">
-              <h2>Nuevo Usuario</h2>
+              <div className="modal-header">
+                <h2>Nuevo Usuario</h2>
+                <button className="modal-close" onClick={() => setShowForm(false)}>✕</button>
+              </div>
               <form onSubmit={handleCrear}>
                 <div className="form-group">
                   <label>Nombre completo *</label>

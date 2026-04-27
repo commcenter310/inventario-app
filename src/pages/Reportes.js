@@ -168,9 +168,14 @@ export default function Reportes() {
         {firmaVer && (
           <div className="modal-overlay" onClick={() => setFirmaVer(null)}>
             <div className="modal" onClick={e => e.stopPropagation()}>
-              <h2>✍️ Firma Digital</h2>
-              <img src={firmaVer} alt="Firma digital" style={{ maxWidth: '100%', border: '1px solid #ccc', borderRadius: 8 }} />
-              <button className="btn btn-secondary" onClick={() => setFirmaVer(null)}>Cerrar</button>
+              <div className="modal-header">
+                <h2>✍️ Firma Digital</h2>
+                <button className="modal-close" onClick={() => setFirmaVer(null)}>✕</button>
+              </div>
+              <img src={firmaVer} alt="Firma digital" style={{ maxWidth: '100%', border: '1px solid #e2e8f0', borderRadius: 8 }} />
+              <div className="modal-actions">
+                <button className="btn btn-secondary" onClick={() => setFirmaVer(null)}>Cerrar</button>
+              </div>
             </div>
           </div>
         )}
