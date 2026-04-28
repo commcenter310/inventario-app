@@ -22,14 +22,21 @@ export default function AdminUsuarios() {
 
   useEffect(() => { cargar(); }, []);
 
+  function validarPassword(pwd) {
+    if (pwd.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+    if (!/[a-zA-Z]/.test(pwd)) return 'La contraseña debe incluir al menos una letra.';
+    if (!/[0-9]/.test(pwd)) return 'La contraseña debe incluir al menos un número.';
+    return null;
+  }
+
   async function handleCrear(e) {
     e.preventDefault();
+    const pwdError = validarPassword(form.password);
+    if (pwdError) { setError(pwdError); return; }
     setGuardando(true);
     setError('');
     setExito('');
     try {
-      // Crear en Supabase Auth usando admin API
-      // Nota: en el cliente browser, se usa signUp; en producción real usar Edge Function
       const { data, error: authErr } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -151,7 +158,7 @@ export default function AdminUsuarios() {
                 </div>
                 <div className="form-group">
                   <label>Contraseña temporal *</label>
-                  <input type="password" required minLength={6} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+                  <input type="password" required minLength={8} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Mín. 8 caracteres con letras y números" />
                 </div>
                 <div className="form-group">
                   <label>Rol</label>

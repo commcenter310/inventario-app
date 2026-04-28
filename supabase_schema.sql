@@ -118,7 +118,68 @@ CREATE POLICY "alertas: admin puede todo" ON public.alertas
 CREATE POLICY "alertas: todos pueden leer" ON public.alertas
   FOR SELECT USING (auth.role() = 'authenticated');
 
--- ===== 8. PRIMER USUARIO ADMIN =====
+-- ===== 8. FUNCIÓN ATÓMICA PARA AJUSTE DE STOCK =====
+-- Ejecuta el ajuste de stock, registro de movimiento y alerta en una sola transacción.
+-- Elimina race conditions cuando dos operaciones ocurren al mismo tiempo.
+-- Uso desde el cliente: supabase.rpc('ajustar_stock', { p_item_id, p_usuario_id, p_tipo, p_cantidad, p_firma, p_notas })
+CREATE OR REPLACE FUNCTION public.ajustar_stock(
+  p_item_id    BIGINT,
+  p_usuario_id UUID,
+  p_tipo       TEXT,
+  p_cantidad   INT,
+  p_firma      TEXT DEFAULT NULL,
+  p_notas      TEXT DEFAULT NULL
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_item          public.items%ROWTYPE;
+  v_nueva_cantidad INT;
+  v_mov_id        BIGINT;
+BEGIN
+  -- Bloquear la fila para evitar modificaciones concurrentes
+  SELECT * INTO v_item FROM public.items WHERE id = p_item_id FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Item % no encontrado', p_item_id;
+  END IF;
+
+  IF v_item.estado = 'inactivo' THEN
+    RAISE EXCEPTION 'El item "%" está inactivo', v_item.nombre;
+  END IF;
+
+  v_nueva_cantidad := CASE p_tipo
+    WHEN 'salida'  THEN v_item.cantidad - p_cantidad
+    ELSE                v_item.cantidad + p_cantidad
+  END;
+
+  IF v_nueva_cantidad < 0 THEN
+    RAISE EXCEPTION 'Stock insuficiente: "%" solo tiene % unidades', v_item.nombre, v_item.cantidad;
+  END IF;
+
+  UPDATE public.items SET cantidad = v_nueva_cantidad WHERE id = p_item_id;
+
+  INSERT INTO public.movimientos (item_id, usuario_id, tipo, cantidad, firma_digital, notas)
+  VALUES (p_item_id, p_usuario_id, p_tipo, p_cantidad, p_firma, p_notas)
+  RETURNING id INTO v_mov_id;
+
+  IF v_nueva_cantidad <= v_item.cantidad_minima THEN
+    INSERT INTO public.alertas (item_id, mensaje)
+    VALUES (p_item_id,
+      'Stock bajo: "' || v_item.nombre || '" tiene solo ' || v_nueva_cantidad ||
+      ' unidades (mínimo: ' || v_item.cantidad_minima || ')');
+  END IF;
+
+  RETURN json_build_object(
+    'movimiento_id',   v_mov_id,
+    'nueva_cantidad',  v_nueva_cantidad
+  );
+END;
+$$;
+
+-- ===== 9. PRIMER USUARIO ADMIN =====
 -- IMPORTANTE: Primero crea tu cuenta en Supabase Auth (Authentication > Users > Invite)
 -- Luego ejecuta esto con el UUID del usuario creado:
 --
