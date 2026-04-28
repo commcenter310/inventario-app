@@ -57,9 +57,11 @@ export async function createItem(item) {
 }
 
 export async function updateItem(id, updates) {
+  // Excluir campos generados/inmutables que Postgres no permite actualizar
+  const { id: _, qr_code, created_at, estado, ...campos } = updates;
   const { data, error } = await supabase
     .from('items')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update({ ...campos, updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();
