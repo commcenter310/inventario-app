@@ -10,8 +10,12 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Timeout de seguridad: si Supabase tarda más de 6s (lock bloqueado), forzar loading=false
+    const timeout = setTimeout(() => setLoading(false), 6000);
+
     // Obtener sesión inicial
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      clearTimeout(timeout);
       setSession(session);
       if (session?.user) {
         try {
