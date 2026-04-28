@@ -46,7 +46,7 @@ export default function Dashboard() {
   // Carga paginada de items (tabla)
   const cargarItems = useCallback(async () => {
     setLoadingItems(true);
-    const t = setTimeout(() => setLoadingItems(false), 8000);
+    const t = setTimeout(() => setLoadingItems(false), 15000);
     try {
       const { data, count, totalPages } = await getItems({
         search: busquedaDebounced,
@@ -71,7 +71,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function cargarStats() {
       setLoadingStats(true);
-      const t = setTimeout(() => setLoadingStats(false), 8000);
+      const t = setTimeout(() => setLoadingStats(false), 15000);
       try {
         const [{ data }, alertasData] = await Promise.all([
           getItems({ pageSize: 1000 }),

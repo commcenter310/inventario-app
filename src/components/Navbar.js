@@ -23,7 +23,7 @@ export default function Navbar() {
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
 
   async function handleLogout() {
-    await signOut();
+    try { await signOut(); } catch (e) { console.error('signOut error:', e); }
     navigate('/login');
   }
 

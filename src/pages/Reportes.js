@@ -48,7 +48,7 @@ export default function Reportes() {
   useEffect(() => {
     if (tab !== 'movimientos') return;
     setLoading(true);
-    const t = setTimeout(() => setLoading(false), 8000);
+    const t = setTimeout(() => setLoading(false), 15000);
     getMovimientos({
       itemId: filtroItem || undefined,
       usuarioId: isAdmin ? (filtroUsuario || undefined) : session.user.id,
