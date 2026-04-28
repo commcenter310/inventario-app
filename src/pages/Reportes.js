@@ -48,6 +48,7 @@ export default function Reportes() {
   useEffect(() => {
     if (tab !== 'movimientos') return;
     setLoading(true);
+    const t = setTimeout(() => setLoading(false), 8000);
     getMovimientos({
       itemId: filtroItem || undefined,
       usuarioId: isAdmin ? (filtroUsuario || undefined) : session.user.id,
@@ -57,10 +58,11 @@ export default function Reportes() {
       page: paginaMovs,
       pageSize: PAGE_SIZE,
     }).then(({ data, count, totalPages }) => {
+      clearTimeout(t);
       setMovimientos(data);
       setTotalMovs(count);
       setTotalPaginasMovs(totalPages);
-    }).catch(console.error).finally(() => setLoading(false));
+    }).catch(console.error).finally(() => { clearTimeout(t); setLoading(false); });
   }, [tab, filtroItem, filtroUsuario, filtroTipo, filtroDesdeFecha, filtroHastaFecha, paginaMovs, isAdmin, session]);
 
   // Para exportar necesitamos TODOS los movimientos (sin paginación)

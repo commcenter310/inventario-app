@@ -46,18 +46,21 @@ export default function Dashboard() {
   // Carga paginada de items (tabla)
   const cargarItems = useCallback(async () => {
     setLoadingItems(true);
+    const t = setTimeout(() => setLoadingItems(false), 8000);
     try {
       const { data, count, totalPages } = await getItems({
         search: busquedaDebounced,
         page: pagina,
         pageSize: PAGE_SIZE,
       });
+      clearTimeout(t);
       setItems(data);
       setTotalItems(count);
       setTotalPaginas(totalPages);
     } catch (e) {
       console.error(e);
     } finally {
+      clearTimeout(t);
       setLoadingItems(false);
     }
   }, [busquedaDebounced, pagina]);
@@ -68,16 +71,19 @@ export default function Dashboard() {
   useEffect(() => {
     async function cargarStats() {
       setLoadingStats(true);
+      const t = setTimeout(() => setLoadingStats(false), 8000);
       try {
         const [{ data }, alertasData] = await Promise.all([
           getItems({ pageSize: 1000 }),
           getAlertasNoLeidas(),
         ]);
+        clearTimeout(t);
         setStatsItems(data);
         setAlertas(alertasData);
       } catch (e) {
         console.error(e);
       } finally {
+        clearTimeout(t);
         setLoadingStats(false);
       }
     }
