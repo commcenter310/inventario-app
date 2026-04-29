@@ -346,15 +346,17 @@ export default function AdminInventario() {
                   </div>
                   <div className="form-group">
                     <label>Categoría</label>
-                    <input
-                      value={form.categoria || ''}
-                      onChange={e => setForm({ ...form, categoria: e.target.value })}
-                      list="categorias-list"
-                      placeholder="Escribe o elige una..."
-                    />
-                    <datalist id="categorias-list">
-                      {categorias.map(c => <option key={c.nombre} value={c.nombre} />)}
-                    </datalist>
+                    <select value={form.categoria || ''} onChange={e => setForm({ ...form, categoria: e.target.value })}>
+                      <option value="">— Sin categoría —</option>
+                      <option>Limpieza</option>
+                      <option>Papelería</option>
+                      <option>Cómputo</option>
+                      <option>Cafetería</option>
+                      <option>Herramientas</option>
+                      <option>Mobiliario</option>
+                      <option>Botiquín</option>
+                      <option>Otros</option>
+                    </select>
                   </div>
                   <div className="form-group">
                     <label>Stock actual (cajas / piezas)</label>
