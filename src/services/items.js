@@ -42,6 +42,24 @@ export async function getItemById(id) {
   return data;
 }
 
+async function verificarAlertaStock(item) {
+  if (item.cantidad <= item.cantidad_minima) {
+    // Solo insertar si no hay ya una alerta no leída para este item
+    const { data: existente } = await supabase
+      .from('alertas')
+      .select('id')
+      .eq('item_id', item.id)
+      .eq('leida', false)
+      .limit(1);
+    if (!existente || existente.length === 0) {
+      await supabase.from('alertas').insert([{
+        item_id: item.id,
+        mensaje: `Stock bajo: ${item.nombre} tiene solo ${item.cantidad} unidades (mínimo: ${item.cantidad_minima})`,
+      }]);
+    }
+  }
+}
+
 export async function createItem(item) {
   // Generar QR como URL completa para que el celular abra la app directamente
   const code = `INV-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
@@ -53,6 +71,7 @@ export async function createItem(item) {
     .select()
     .single();
   if (error) throw error;
+  await verificarAlertaStock(data);
   return data;
 }
 
@@ -66,6 +85,7 @@ export async function updateItem(id, updates) {
     .select()
     .single();
   if (error) throw error;
+  await verificarAlertaStock(data);
   return data;
 }
 
