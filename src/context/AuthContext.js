@@ -16,6 +16,20 @@ export function AuthProvider({ children }) {
     // Obtener sesión inicial
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       clearTimeout(timeout);
+
+      // Verificar que el token siga siendo válido con el servidor
+      if (session) {
+        const { error } = await supabase.auth.getUser();
+        if (error) {
+          // Token expirado o inválido — cerrar sesión y mandar al login
+          await supabase.auth.signOut().catch(() => {});
+          setSession(null);
+          setPerfil(null);
+          setLoading(false);
+          return;
+        }
+      }
+
       setSession(session);
       if (session?.user) {
         try {
