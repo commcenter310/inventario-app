@@ -7,8 +7,14 @@ export async function signIn(email, password) {
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  try {
+    await supabase.auth.signOut();
+  } catch (e) {
+    console.error('signOut:', e);
+  }
+  // Limpiar sesión local siempre, aunque falle Supabase
+  localStorage.clear();
+  sessionStorage.clear();
 }
 
 export async function getSession() {
