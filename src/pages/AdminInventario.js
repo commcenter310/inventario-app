@@ -11,7 +11,7 @@ import Paginacion from '../components/Paginacion';
 const PAGE_SIZE = 20;
 const ITEM_VACIO = {
   nombre: '', categoria: '', cantidad: 0, cantidad_minima: 5,
-  ubicacion: '', descripcion: '', valor_aproximado: '',
+  unidades_por_caja: '', ubicacion: '', descripcion: '', valor_aproximado: '',
 };
 
 export default function AdminInventario() {
@@ -218,6 +218,7 @@ export default function AdminInventario() {
                       <th>Nombre</th>
                       <th>Categoría</th>
                       <th>Stock</th>
+                      <th>Uds/caja</th>
                       <th>Mínimo</th>
                       <th>Ubicación</th>
                       <th>QR</th>
@@ -226,7 +227,7 @@ export default function AdminInventario() {
                   </thead>
                   <tbody>
                     {items.length === 0 ? (
-                      <tr><td colSpan={7} className="empty-row">
+                      <tr><td colSpan={8} className="empty-row">
                         {busqueda ? `Sin resultados para "${busqueda}"` : 'No hay items. Crea uno o importa desde CSV.'}
                       </td></tr>
                     ) : items.map(item => (
@@ -238,6 +239,7 @@ export default function AdminInventario() {
                             {item.cantidad}
                           </span>
                         </td>
+                        <td className="text-muted">{item.unidades_por_caja || '—'}</td>
                         <td>{item.cantidad_minima}</td>
                         <td className="text-muted">{item.ubicacion || '—'}</td>
                         <td>
@@ -355,8 +357,12 @@ export default function AdminInventario() {
                     </datalist>
                   </div>
                   <div className="form-group">
-                    <label>Stock actual</label>
+                    <label>Stock actual (cajas / piezas)</label>
                     <input type="number" min="0" value={form.cantidad} onChange={e => setForm({ ...form, cantidad: parseInt(e.target.value) || 0 })} />
+                  </div>
+                  <div className="form-group">
+                    <label>Unidades por caja</label>
+                    <input type="number" min="1" value={form.unidades_por_caja || ''} onChange={e => setForm({ ...form, unidades_por_caja: parseInt(e.target.value) || '' })} placeholder="Ej: 12" />
                   </div>
                   <div className="form-group">
                     <label>Stock mínimo (alerta)</label>
