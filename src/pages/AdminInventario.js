@@ -364,7 +364,21 @@ export default function AdminInventario() {
                   </div>
                   <div className="form-group">
                     <label>Ubicación</label>
-                    <input value={form.ubicacion || ''} onChange={e => setForm({ ...form, ubicacion: e.target.value })} placeholder="Armario A, Cajón 3..." />
+                    <select value={form.ubicacion || ''} onChange={e => setForm({ ...form, ubicacion: e.target.value })}>
+                      <option value="">— Sin ubicación —</option>
+                      <option>Oficina 1</option>
+                      <option>Oficina 2</option>
+                      <option>Oficina Central</option>
+                      <option>Archivero</option>
+                      <option>Coffee Break</option>
+                      <option>Baño Eloy</option>
+                      <option>Baño Hombres</option>
+                      <option>Baño Mujeres</option>
+                      <option>Pasillo Entrada</option>
+                      <option>Casa de Harry Potter</option>
+                      <option>Cueva del diablo</option>
+                      <option>Cocina</option>
+                    </select>
                   </div>
                   <div className="form-group">
                     <label>Valor aproximado ($)</label>
