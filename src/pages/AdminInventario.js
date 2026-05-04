@@ -90,17 +90,12 @@ export default function AdminInventario() {
   async function handleGuardar(e) {
     e.preventDefault();
     setGuardando(true); setError('');
-    const timeout = setTimeout(() => {
-      setGuardando(false);
-      setError('La operación tardó demasiado. Recarga la página e intenta de nuevo.');
-    }, 10000);
     try {
       if (editando) { await updateItem(editando, form); }
       else { await createItem(form); }
-      clearTimeout(timeout);
       setShowForm(false);
       await cargar();
-    } catch (e) { clearTimeout(timeout); setError(e.message); }
+    } catch (e) { setError(e.message); }
     finally { setGuardando(false); }
   }
   async function handleEliminar(id, nombre) {

@@ -7,21 +7,9 @@ export async function signIn(email, password) {
 }
 
 export async function signOut() {
-  // Limpiar sesión local PRIMERO — si Supabase se cuelga, al menos quedamos deslogueados
-  try {
-    localStorage.clear();
-    sessionStorage.clear();
-  } catch (e) { /* noop */ }
-
-  // Intentar signOut con timeout para no colgarse en el lock
-  try {
-    await Promise.race([
-      supabase.auth.signOut(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('signOut timeout')), 3000)),
-    ]);
-  } catch (e) {
-    console.error('signOut:', e);
-  }
+  // Con noopLock, signOut ya no se cuelga. Simple y directo.
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
 }
 
 export async function getSession() {

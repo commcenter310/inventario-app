@@ -10,96 +10,41 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancelado = false;
-
-    // Helper: ejecutar promesa con timeout
-    const conTimeout = (promise, ms) => Promise.race([
-      promise,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
-    ]);
-
-    async function inicializar() {
-      try {
-        // 1. Leer sesión local (rápido, lee de memoria/localStorage)
-        const { data: { session: sesionLocal } } = await conTimeout(
-          supabase.auth.getSession(), 5000
-        );
-
-        if (cancelado) return;
-
-        // Si no hay sesión local, mandar a login
-        if (!sesionLocal) {
-          setSession(null);
-          setPerfil(null);
-          setLoading(false);
-          return;
-        }
-
-        // 2. Validar contra el servidor refrescando el token (prueba que refresh_token sirve)
-        const { data: refrescado, error: errRefresh } = await conTimeout(
-          supabase.auth.refreshSession(), 6000
-        );
-
-        if (cancelado) return;
-
-        if (errRefresh || !refrescado?.session) {
-          // Refresh token expirado o inválido — limpiar todo y mandar a login
-          try {
-            localStorage.clear();
-            sessionStorage.clear();
-          } catch (e) { /* noop */ }
-          setSession(null);
-          setPerfil(null);
-          setLoading(false);
-          return;
-        }
-
-        // 3. Sesión válida, cargar perfil
-        setSession(refrescado.session);
-        try {
-          const p = await conTimeout(getUserProfile(refrescado.session.user.id), 5000);
-          if (!cancelado) setPerfil(p);
-        } catch (e) {
-          console.error('Error obteniendo perfil:', e);
-        }
-        setLoading(false);
-      } catch (e) {
-        // Cualquier timeout/error → tratamos como sesión inválida
-        console.error('Error inicializando auth:', e);
-        try {
-          localStorage.clear();
-          sessionStorage.clear();
-        } catch (err) { /* noop */ }
-        if (!cancelado) {
-          setSession(null);
-          setPerfil(null);
-          setLoading(false);
-        }
-      }
-    }
-
-    inicializar();
-
-    // Escuchar cambios de sesión
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (cancelado) return;
+    // 1. Leer sesión guardada (de localStorage, instantáneo con noopLock)
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user) {
+        getUserProfile(session.user.id)
+          .then(p => setPerfil(p))
+          .catch(() => setPerfil(null));
+      }
+      setLoading(false);
+    }).catch(() => {
+      setLoading(false);
+    });
+
+    // 2. Escuchar TODOS los cambios: login, logout, token refresh, token expirado
+    //    Supabase maneja el refresh automáticamente con autoRefreshToken: true.
+    //    Si el refresh token expira, dispara SIGNED_OUT y session se vuelve null.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+
       if (session?.user) {
         try {
           const p = await getUserProfile(session.user.id);
-          if (!cancelado) setPerfil(p);
+          setPerfil(p);
         } catch (e) {
-          if (!cancelado) setPerfil(null);
+          setPerfil(null);
         }
       } else {
         setPerfil(null);
       }
+
+      // Si estábamos en loading (primer render), ya terminamos
+      setLoading(false);
     });
 
-    return () => {
-      cancelado = true;
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const value = {
