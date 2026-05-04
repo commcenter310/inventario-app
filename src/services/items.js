@@ -42,6 +42,15 @@ export async function getItemById(id) {
   return data;
 }
 
+// Limpiar strings vacíos → null para que Supabase no rechace columnas numéricas
+function limpiarCampos(obj) {
+  const limpio = {};
+  for (const [k, v] of Object.entries(obj)) {
+    limpio[k] = v === '' ? null : v;
+  }
+  return limpio;
+}
+
 async function verificarAlertaStock(item) {
   if (item.cantidad <= item.cantidad_minima) {
     // Solo insertar si no hay ya una alerta no leída para este item
@@ -67,7 +76,7 @@ export async function createItem(item) {
   const qrCode = `${base}/escanear?qr=${code}`;
   const { data, error } = await supabase
     .from('items')
-    .insert([{ ...item, qr_code: qrCode }])
+    .insert([{ ...limpiarCampos(item), qr_code: qrCode }])
     .select()
     .single();
   if (error) throw error;
@@ -80,7 +89,7 @@ export async function updateItem(id, updates) {
   const { id: _, qr_code, created_at, estado, ...campos } = updates;
   const { data, error } = await supabase
     .from('items')
-    .update({ ...campos, updated_at: new Date().toISOString() })
+    .update({ ...limpiarCampos(campos), updated_at: new Date().toISOString() })
     .eq('id', id)
     .select()
     .single();
