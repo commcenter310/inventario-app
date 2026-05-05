@@ -32,6 +32,7 @@ export default function AdminInventario() {
   const [busquedaDebounced, setBusquedaDebounced] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [fotoVer, setFotoVer] = useState(null);
   const [fotoArchivo, setFotoArchivo] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const fotoInputRef = useRef(null);
@@ -254,7 +255,7 @@ export default function AdminInventario() {
                       <tr key={item.id} className={item.cantidad <= item.cantidad_minima ? 'row-alerta' : ''}>
                         <td className="td-foto">
                           {item.foto_url
-                            ? <img src={item.foto_url} alt={item.nombre} className="item-thumb" />
+                            ? <img src={item.foto_url} alt={item.nombre} className="item-thumb item-thumb-click" onClick={() => setFotoVer({ url: item.foto_url, nombre: item.nombre })} />
                             : <div className="item-thumb-placeholder">
                                 <svg width="18" height="18" fill="none" stroke="#9ca3af" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                               </div>
@@ -593,6 +594,18 @@ export default function AdminInventario() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+        {/* ── Modal foto grande ── */}
+        {fotoVer && (
+          <div className="modal-overlay" onClick={() => setFotoVer(null)}>
+            <div className="modal foto-modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>{fotoVer.nombre}</h2>
+                <button className="modal-close" onClick={() => setFotoVer(null)}>✕</button>
+              </div>
+              <img src={fotoVer.url} alt={fotoVer.nombre} className="foto-modal-img" />
             </div>
           </div>
         )}
