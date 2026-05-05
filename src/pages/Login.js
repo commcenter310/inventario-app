@@ -26,7 +26,7 @@ export default function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <div className="login-logo">📦</div>
+        <div className="login-logo">I</div>
         <h1>Inventario Oficina</h1>
         <form onSubmit={handleSubmit} className="login-form">
           <div className="form-group">
