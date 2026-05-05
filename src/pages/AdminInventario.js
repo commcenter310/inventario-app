@@ -4,6 +4,7 @@ import {
   getItems, createItem, updateItem, deleteItem,
   getCategorias, renameCategoria,
   parsearArchivoImportacion, importarItems, descargarPlantillaCSV,
+  uploadFoto, deleteFoto,
 } from '../services/items';
 import Navbar from '../components/Navbar';
 import Paginacion from '../components/Paginacion';
@@ -31,6 +32,9 @@ export default function AdminInventario() {
   const [busquedaDebounced, setBusquedaDebounced] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState('');
+  const [fotoArchivo, setFotoArchivo] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
+  const fotoInputRef = useRef(null);
 
   // Categorías state
   const [categorias, setCategorias] = useState([]);
@@ -82,17 +86,37 @@ export default function AdminInventario() {
 
   // ── Items CRUD ──────────────────────────────────────────────
   function abrirCrear() {
-    setEditando(null); setForm(ITEM_VACIO); setShowForm(true); setError('');
+    setEditando(null); setForm(ITEM_VACIO); setFotoArchivo(null); setFotoPreview(null); setShowForm(true); setError('');
   }
   function abrirEditar(item) {
-    setEditando(item.id); setForm({ ...item }); setShowForm(true); setError('');
+    setEditando(item.id); setForm({ ...item }); setFotoArchivo(null); setFotoPreview(item.foto_url || null); setShowForm(true); setError('');
+  }
+  function handleFotoChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError('La imagen no debe pesar más de 5 MB.'); return; }
+    setFotoArchivo(file);
+    setFotoPreview(URL.createObjectURL(file));
+  }
+  async function handleQuitarFoto() {
+    if (form.foto_url) {
+      try { await deleteFoto(form.foto_url); } catch (e) { /* ignorar */ }
+    }
+    setFotoArchivo(null); setFotoPreview(null); setForm({ ...form, foto_url: null });
   }
   async function handleGuardar(e) {
     e.preventDefault();
     setGuardando(true); setError('');
     try {
-      if (editando) { await updateItem(editando, form); }
-      else { await createItem(form); }
+      let formData = { ...form };
+      // Si hay un archivo nuevo, subirlo
+      if (fotoArchivo) {
+        // Eliminar foto anterior si existe
+        if (form.foto_url) await deleteFoto(form.foto_url).catch(() => {});
+        formData.foto_url = await uploadFoto(fotoArchivo);
+      }
+      if (editando) { await updateItem(editando, formData); }
+      else { await createItem(formData); }
       setShowForm(false);
       await cargar();
     } catch (e) { setError(e.message); }
@@ -210,6 +234,7 @@ export default function AdminInventario() {
                 <table className="items-table">
                   <thead>
                     <tr>
+                      <th></th>
                       <th>Nombre</th>
                       <th>Categoría</th>
                       <th>Stock</th>
@@ -222,11 +247,19 @@ export default function AdminInventario() {
                   </thead>
                   <tbody>
                     {items.length === 0 ? (
-                      <tr><td colSpan={8} className="empty-row">
+                      <tr><td colSpan={9} className="empty-row">
                         {busqueda ? `Sin resultados para "${busqueda}"` : 'No hay items. Crea uno o importa desde CSV.'}
                       </td></tr>
                     ) : items.map(item => (
                       <tr key={item.id} className={item.cantidad <= item.cantidad_minima ? 'row-alerta' : ''}>
+                        <td className="td-foto">
+                          {item.foto_url
+                            ? <img src={item.foto_url} alt={item.nombre} className="item-thumb" />
+                            : <div className="item-thumb-placeholder">
+                                <svg width="18" height="18" fill="none" stroke="#9ca3af" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                              </div>
+                          }
+                        </td>
                         <td><strong>{item.nombre}</strong></td>
                         <td>{item.categoria ? <span className="cat-pill">{item.categoria}</span> : '—'}</td>
                         <td>
@@ -386,6 +419,37 @@ export default function AdminInventario() {
                   <div className="form-group">
                     <label>Valor aproximado ($)</label>
                     <input type="number" min="0" step="0.01" value={form.valor_aproximado || ''} onChange={e => setForm({ ...form, valor_aproximado: e.target.value })} />
+                  </div>
+                  <div className="form-group span-2">
+                    <label>Foto del producto</label>
+                    <div className="foto-upload-area">
+                      {fotoPreview ? (
+                        <div className="foto-preview-wrap">
+                          <img src={fotoPreview} alt="Preview" className="foto-preview-img" />
+                          <div className="foto-preview-actions">
+                            <button type="button" className="btn btn-xs btn-secondary" onClick={() => fotoInputRef.current.click()}>Cambiar</button>
+                            <button type="button" className="btn btn-xs btn-danger" onClick={handleQuitarFoto}>Quitar</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button type="button" className="foto-upload-btn" onClick={() => fotoInputRef.current.click()}>
+                          <svg width="24" height="24" fill="none" stroke="#9ca3af" strokeWidth="1.5" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="M21 15l-5-5L5 21"/>
+                          </svg>
+                          <span>Tomar foto o subir imagen</span>
+                          <span className="foto-upload-hint">JPG, PNG — Máx 5 MB</span>
+                        </button>
+                      )}
+                      <input
+                        ref={fotoInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        style={{ display: 'none' }}
+                        onChange={handleFotoChange}
+                      />
+                    </div>
                   </div>
                   <div className="form-group span-2">
                     <label>Descripción</label>

@@ -42,6 +42,30 @@ export async function getItemById(id) {
   return data;
 }
 
+// ===== FOTOS =====
+
+export async function uploadFoto(file) {
+  const ext = file.name.split('.').pop();
+  const nombre = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
+  const { error } = await supabase.storage
+    .from('item-fotos')
+    .upload(nombre, file, { cacheControl: '3600', upsert: false });
+  if (error) throw error;
+  const { data: { publicUrl } } = supabase.storage
+    .from('item-fotos')
+    .getPublicUrl(nombre);
+  return publicUrl;
+}
+
+export async function deleteFoto(url) {
+  if (!url) return;
+  // Extraer nombre del archivo de la URL pública
+  const parts = url.split('/item-fotos/');
+  if (parts.length < 2) return;
+  const fileName = parts[1];
+  await supabase.storage.from('item-fotos').remove([fileName]);
+}
+
 // Limpiar strings vacíos → null para que Supabase no rechace columnas numéricas
 function limpiarCampos(obj) {
   const limpio = {};

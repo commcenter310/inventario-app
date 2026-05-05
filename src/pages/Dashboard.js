@@ -286,6 +286,7 @@ export default function Dashboard() {
               <table className="items-table">
                 <thead>
                   <tr>
+                    <th></th>
                     <th>Item</th>
                     <th>Categoría</th>
                     <th>Stock</th>
@@ -296,7 +297,7 @@ export default function Dashboard() {
                 <tbody>
                   {items.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="empty-row">
+                      <td colSpan={6} className="empty-row">
                         {busqueda ? `Sin resultados para "${busqueda}"` : 'No hay items en el inventario.'}
                       </td>
                     </tr>
@@ -308,6 +309,14 @@ export default function Dashboard() {
                         : 100;
                       return (
                         <tr key={item.id} className={bajo ? 'row-alerta' : ''}>
+                          <td className="td-foto">
+                            {item.foto_url
+                              ? <img src={item.foto_url} alt={item.nombre} className="item-thumb" />
+                              : <div className="item-thumb-placeholder">
+                                  <svg width="18" height="18" fill="none" stroke="#9ca3af" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                                </div>
+                            }
+                          </td>
                           <td><strong>{item.nombre}</strong></td>
                           <td>
                             {item.categoria
